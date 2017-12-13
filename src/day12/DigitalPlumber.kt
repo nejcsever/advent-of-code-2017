@@ -1,32 +1,30 @@
 package day12
 
-object DigitalPlumber {
-    fun getElementsInAZeroGroup(input: String): Int {
-        val graph = buildGraph(input)
-        return getAllElementsInAGroup(graph, 0).size
-    }
+typealias Graph = Map<Int, List<Int>>
 
-    fun getNoOfAllGroups(input: String): Int {
-        var i: Int? = 0
-        val graph = buildGraph(input)
-        var visited = setOf<Int>()
-        var noOfGroups = 0
-        while (i != null) {
-            noOfGroups++
-            visited = visited.union(getAllElementsInAGroup(graph, i))
-            i = graph.keys.find { !visited.contains(it) }
-        }
-        return noOfGroups
-    }
+class DigitalPlumber(input: String) {
+    val graph: Graph
 
-    private fun buildGraph(input: String): Map<Int, List<Int>> {
-        return input.split("\n").map {
+    init {
+        graph = input.split("\n").map {
             val chunks = it.split(" <-> ")
             Pair(chunks[0].toInt(), chunks[1].split(", ").map { it.toInt() })
         }.toMap()
     }
 
-    private fun getAllElementsInAGroup(graph: Map<Int, List<Int>>, group: Int): Set<Int> {
+    fun getNoOfElementsForProgramZero(): Int {
+        return getAllGroupElementsForId(graph, 0).size
+    }
+
+    fun getNoOfGroups(): Int {
+        tailrec fun noOfGroups(groupCount: Int, visitedPrograms: Set<Int>, graph: Map<Int, List<Int>>): Int {
+            val group = graph.keys.find { !visitedPrograms.contains(it) } ?: return groupCount
+            return noOfGroups(groupCount + 1, visitedPrograms.union(getAllGroupElementsForId(graph, group)), graph)
+        }
+        return noOfGroups(0, setOf<Int>(), graph)
+    }
+
+    private fun getAllGroupElementsForId(graph: Map<Int, List<Int>>, programId: Int): Set<Int> {
         val visited = mutableSetOf<Int>()
         fun noOfElements(graph: Map<Int, List<Int>>, i: Int) {
             if (visited.contains(i)) {
@@ -35,7 +33,7 @@ object DigitalPlumber {
             visited.add(i)
             graph[i]!!.map { noOfElements(graph, it) }
         }
-        noOfElements(graph, group)
+        noOfElements(graph, programId)
         return visited.toSet()
     }
 }
